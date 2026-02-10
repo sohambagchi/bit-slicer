@@ -1,0 +1,126 @@
+.container {
+    width: 100%;
+    margin: 0 0 1.5rem 0;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.title {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.bar {
+    display: flex;
+    height: 60px;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #333;
+}
+
+.section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    padding: 0 4px;
+    position: relative;
+    transition: width 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    overflow: hidden;
+    min-width: 0;
+    /* Allows shrinking below content size */
+    cursor: help;
+}
+
+.section:hover {
+    filter: brightness(1.1);
+    z-index: 2;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.tag {
+    background: var(--tag-color);
+}
+
+.index {
+    background: var(--index-color);
+}
+
+.offset {
+    background: var(--offset-color);
+}
+
+.label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.count {
+    font-size: 1.1rem;
+    white-space: nowrap;
+}
+
+.tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, bottom 0.2s;
+    margin-bottom: 8px;
+}
+
+.section:hover .tooltip {
+    opacity: 1;
+    bottom: 110%;
+}
+
+/* Legend */
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.tagDot {
+    background: var(--tag-color);
+}
+
+.indexDot {
+    background: var(--index-color);
+}
+
+.offsetDot {
+    background: var(--offset-color);
+}
