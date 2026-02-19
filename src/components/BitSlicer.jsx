@@ -21,8 +21,9 @@ const BitSlicer = () => {
     // Game Mode State
     const [isGameMode, setIsGameMode] = useState(false);
     const [gameTarget, setGameTarget] = useState(null);
-    const [guess, setGuess] = useState({ cacheSize: '', blockSize: '', associativity: '' });
+    const [guess, setGuess] = useState({ cacheSize: '', blockSize: '', associativity: '', tagArraySize: '' });
     const [feedback, setFeedback] = useState(null);
+    const [gameVariant, setGameVariant] = useState(null); // 'FIND_CACHE' | 'FIND_ASSOC'
 
     // Derived values for calculation
     const currentCacheSize = isGameMode && gameTarget ? gameTarget.cacheSize : Math.pow(2, cacheSizeLog);
@@ -52,7 +53,9 @@ const BitSlicer = () => {
 
         setGameTarget(target);
         setIsGameMode(true);
-        setGuess({ cacheSize: '', blockSize: '', associativity: '' });
+        const variant = Math.random() < 0.5 ? 'FIND_CACHE' : 'FIND_ASSOC';
+        setGameVariant(variant);
+        setGuess({ cacheSize: '', blockSize: '', associativity: '', tagArraySize: '' });
         setFeedback(null);
     };
 
@@ -70,21 +73,36 @@ const BitSlicer = () => {
         const gCache = parseInput(guess.cacheSize);
         const gBlock = parseInput(guess.blockSize);
         const gAssoc = parseInput(guess.associativity);
+        const gTagArray = parseInput(guess.tagArraySize);
 
         let correct = true;
         let msg = [];
 
-        if (gCache !== gameTarget.cacheSize) {
-            correct = false;
-            msg.push(`Cache Size incorrect.`);
+        if (gameVariant === 'FIND_CACHE') {
+            if (gCache !== gameTarget.cacheSize) {
+                correct = false;
+                msg.push(`Cache Size incorrect.`);
+            }
         }
+
+        if (gameVariant === 'FIND_ASSOC') {
+            if (gAssoc !== gameTarget.associativity) {
+                correct = false;
+                msg.push(`Associativity incorrect.`);
+            }
+        }
+
         if (gBlock !== gameTarget.blockSize) {
             correct = false;
             msg.push(`Block Size incorrect.`);
         }
-        if (gAssoc !== gameTarget.associativity) {
+
+        // Tag Array Size Check
+        const totalBlocks = gameTarget.cacheSize / gameTarget.blockSize;
+        const expectedTagArraySize = totalBlocks * bits.tagBits;
+        if (gTagArray !== expectedTagArraySize) {
             correct = false;
-            msg.push(`Associativity incorrect.`);
+            msg.push(`Tag Array Size incorrect.`);
         }
 
         if (correct) {
@@ -181,16 +199,24 @@ const BitSlicer = () => {
                     </div>
                 ) : (
                     <div className={styles.gameControls}>
-                        <div className={styles.inputGroup}>
-                            <label>Cache Size (Bytes)</label>
-                            <input
-                                type="number"
-                                placeholder="e.g. 4096"
-                                value={guess.cacheSize}
-                                onChange={(e) => setGuess({ ...guess, cacheSize: e.target.value })}
-                                className={styles.gameInput}
-                            />
-                        </div>
+                        {gameVariant === 'FIND_CACHE' ? (
+                            <div className={styles.inputGroup}>
+                                <label>Cache Size (Bytes)</label>
+                                <input
+                                    type="number"
+                                    placeholder="e.g. 4096"
+                                    value={guess.cacheSize}
+                                    onChange={(e) => setGuess({ ...guess, cacheSize: e.target.value })}
+                                    className={styles.gameInput}
+                                />
+                            </div>
+                        ) : (
+                            <div className={styles.inputGroup}>
+                                <label>Cache Size</label>
+                                <div className={styles.staticValue}>{formatBytes(gameTarget.cacheSize)}</div>
+                            </div>
+                        )}
+
                         <div className={styles.inputGroup}>
                             <label>Block Size (Bytes)</label>
                             <input
@@ -201,16 +227,38 @@ const BitSlicer = () => {
                                 className={styles.gameInput}
                             />
                         </div>
+
+                        {gameVariant === 'FIND_ASSOC' ? (
+                            <div className={styles.inputGroup}>
+                                <label>Associativity (Ways)</label>
+                                <input
+                                    type="number"
+                                    placeholder="e.g. 1"
+                                    value={guess.associativity}
+                                    onChange={(e) => setGuess({ ...guess, associativity: e.target.value })}
+                                    className={styles.gameInput}
+                                />
+                            </div>
+                        ) : (
+                            <div className={styles.inputGroup}>
+                                <label>Associativity</label>
+                                <div className={styles.staticValue}>
+                                    {gameTarget.associativity === 1 ? 'Direct Mapped' : `${gameTarget.associativity}-way`}
+                                </div>
+                            </div>
+                        )}
+
                         <div className={styles.inputGroup}>
-                            <label>Associativity (Ways)</label>
+                            <label>Tag Array Size (Bits)</label>
                             <input
                                 type="number"
-                                placeholder="e.g. 1"
-                                value={guess.associativity}
-                                onChange={(e) => setGuess({ ...guess, associativity: e.target.value })}
+                                placeholder="e.g. 1024"
+                                value={guess.tagArraySize}
+                                onChange={(e) => setGuess({ ...guess, tagArraySize: e.target.value })}
                                 className={styles.gameInput}
                             />
                         </div>
+
                         <button className={styles.checkBtn} onClick={checkSolution}>Check Answer</button>
                         {feedback && (
                             <div className={`${styles.feedback} ${feedback.type === 'success' ? styles.success : styles.error}`}>
@@ -220,20 +268,22 @@ const BitSlicer = () => {
                     </div>
                 )}
 
-                <div className={styles.stats}>
-                    <div className={styles.statItem}>
-                        <span className={styles.statLabel}>Number of Sets</span>
-                        <span className={styles.statValue}>
-                            {Math.pow(2, bits.indexBits).toLocaleString()}
-                        </span>
+                {!isGameMode && (
+                    <div className={styles.stats}>
+                        <div className={styles.statItem}>
+                            <span className={styles.statLabel}>Number of Sets</span>
+                            <span className={styles.statValue}>
+                                {Math.pow(2, bits.indexBits).toLocaleString()}
+                            </span>
+                        </div>
+                        <div className={styles.statItem}>
+                            <span className={styles.statLabel}>Total Blocks</span>
+                            <span className={styles.statValue}>
+                                {(currentCacheSize / currentBlockSize).toLocaleString()}
+                            </span>
+                        </div>
                     </div>
-                    <div className={styles.statItem}>
-                        <span className={styles.statLabel}>Total Blocks</span>
-                        <span className={styles.statValue}>
-                            {(currentCacheSize / currentBlockSize).toLocaleString()}
-                        </span>
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     );
